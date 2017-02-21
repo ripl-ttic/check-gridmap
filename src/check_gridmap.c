@@ -1307,7 +1307,7 @@ check_gridmap_get_pose(check_gridmap_t *self, bot_core_pose_t *pose)
  *
  * clear_using_laser : Clear the map using the extent of the laser
  *
- * clear_person:       Clears the area around the current person (used for prson following)
+ * clear_person:       Clears the area around the current person (used for person following)
  *
  * ignore_local:       Ignores the obstacles reported from local sensing - useful for 
  *                     matching stuff against the map 
