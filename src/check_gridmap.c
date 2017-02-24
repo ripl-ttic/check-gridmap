@@ -53,7 +53,7 @@
 #define GRIDMAP_FORWARD_OFFSET  10.0
 #define GRIDMAP_RESOLUTION   0.10
 
-#define GRIDMAP_RANGE_SMALL       4.0
+#define GRIDMAP_RANGE_SMALL       6.0 //4.0
 #define GRIDMAP_FORWARD_OFFSET_SMALL  1.0
 #define GRIDMAP_RESOLUTION_SMALL   0.10
 
@@ -68,7 +68,7 @@
 #define TRACK_FORWARD_PROPAGATION_TIME 2.0
 #define TRACK_ZONE_PROPAGATION_TIME 2.0
 
-#define CARVE_LOCAL_RADIUS_SIZE 3.0
+#define CARVE_LOCAL_RADIUS_SIZE 5.0 //3.0
 #define OBS_THRESHOLD 1
 #define CARVE_LOCAL_RESOLUTION 36
 
@@ -403,9 +403,10 @@ static void draw_obs_gridmap(check_gridmap_t *self, gridmap_t *gm)
         
         double dist = hypot(pos_r[0] - bot_pose.pos[0], 
                             pos_r[1] - bot_pose.pos[1]);
-        if(dist > CARVE_LOCAL_RADIUS_SIZE + OBS_THRESHOLD){
-            continue;
-        }
+        //if(dist > CARVE_LOCAL_RADIUS_SIZE + OBS_THRESHOLD){ 
+        //    fprintf (stdout, "dist = %.2f\n", dist);
+        //    continue;
+        //}
 
         //calculate the distance - to the center??? 
         if(clear_person){
@@ -918,7 +919,8 @@ static void *render_thread(void *user)
              if (self->sensing_only_local) {
                  //fill a polygon - that goes up to the laser points 
 
-                 if(self->front_laser && self->rear_laser){
+                 // This should be updated to operate on each LIDAR separately
+                 if(self->front_laser) {// && self->rear_laser){
                      //fprintf(stderr,"Finding clearing\n");
                      polygon2d_t *circle_poly = free_poly(self, CARVE_LOCAL_RADIUS_SIZE);
                      gridmap_polygon_fill (new_obsmap, circle_poly, 0);
@@ -957,6 +959,7 @@ static void *render_thread(void *user)
                 
                 self->last_gridmap_send_utime = now;
                 
+                self->tile_generation++;
                 gridmap_util_publish(new_obsmap, self->lcm, "OBSTACLE_MAP", &self->tile_generation, now);
             }
             
@@ -1064,7 +1067,8 @@ static inline void do_line_search(check_gridmap_t *self, gridmap_t *gm,
 int check_gridmap_check_point(check_gridmap_t *self,
                                double x0, double y0)
 {
-
+    // This function isn't really used, but it doesn't make sense to return 0
+    // if that indicates cost/no collision
     if(!self->obsmap){
         return 0;
     }
@@ -1072,6 +1076,8 @@ int check_gridmap_check_point(check_gridmap_t *self,
     int ix0, iy0;
     gridmap_to_ix_iy(self->obsmap, x0, y0, &ix0, &iy0);
 
+    // This function isn't really used, but it doesn't make sense to return 0
+    // if that indicates cost/no collision
     if (ix0 < 0 || ix0 >= self->obsmap->width)
         return 0;
     if (iy0 < 0 || iy0 >= self->obsmap->height)
@@ -1082,6 +1088,7 @@ int check_gridmap_check_point(check_gridmap_t *self,
 
     uint8_t value = self->obsmap->data[iy*self->obsmap->width + ix];
 
+    // else?????
     if(value > 100){
         return 1;
     }    
@@ -1344,7 +1351,7 @@ check_gridmap_t *check_gridmap_create_laser(const int constraints, gboolean rend
     memset(&self->global_map, 0, sizeof(erlcm_map_t));
     self->global_map.complete_map = NULL;
     self->global_map.map = NULL;
-
+    self->tile_generation = 1;
     //g_thread_init(NULL);
     self->lcmgl = NULL;//bot_lcmgl_init(self->lcm, "RRT-CHECKGRID");
     self->lcmgl_debug = NULL;//bot_lcmgl_init(self->lcm,"RRT-CHECKGRID-DBG");
@@ -1372,7 +1379,6 @@ check_gridmap_t *check_gridmap_create_laser(const int constraints, gboolean rend
         fprintf (stderr, "check_gridmap(): Ignoring sensing_only_local = FALSE setting\n");
         self->sensing_only_local = TRUE;
     }
-
 
     self->obsmap = NULL;
     self->new_obsmap = NULL;
@@ -1525,9 +1531,13 @@ check_gridmap_t *check_gridmap_create_laser(const int constraints, gboolean rend
     }
 
     //if (self->sensing_only_local == FALSE)
+    // If we can't get a map, revert to a smaller gridmap so that we don't think
+    // too much of the local environment is safe (a cost of 253 is returned for
+    // locations outside the gridmap
     if(self->sensing_only_small==FALSE){
         int sucess = get_global_map(self);
         if(sucess < 0){
+            fprintf (stdout, "check_gridmap(): Unable to get map from map server. Setting sense_only_small to true\n");
             self->sensing_only_small = TRUE;
         }
     }
