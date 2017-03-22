@@ -439,7 +439,6 @@ static void draw_obs_gridmap(check_gridmap_t *self, gridmap_t *gm)
         double pos_r[2]= {rects->xy[0]+rect->dxy[0],rects->xy[1]+rect->dxy[1]}; 
         double size[2]={rect->size[0],rect->size[1]}; 
 
-        fprintf(stderr,"Processing\n");
         //calculate the distance - to the center??? 
         if(clear_person){
             double p_dist = hypot(pos_r[0] - person_pos[0], 
