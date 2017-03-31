@@ -51,11 +51,11 @@
 // Parameters for full- and small-size gridmaps
 #define GRIDMAP_RANGE       20.0
 #define GRIDMAP_FORWARD_OFFSET  10.0
-#define GRIDMAP_RESOLUTION   0.10
+#define GRIDMAP_RESOLUTION   0.05//0.10
 
 #define GRIDMAP_RANGE_SMALL       6.0 //4.0
 #define GRIDMAP_FORWARD_OFFSET_SMALL  1.0
-#define GRIDMAP_RESOLUTION_SMALL   0.10
+#define GRIDMAP_RESOLUTION_SMALL   0.05//0.10
 
 
 // Reduce the offset that accounts for the distance from the
@@ -131,7 +131,7 @@ void on_planar_lidar(const lcm_recv_buf_t *rbuf, const char * channel,
     }
 }
 
-polygon2d_t *free_poly(check_gridmap_t *s, double max_radius){
+polygon2d_t *free_lidar_poly(check_gridmap_t *s, double max_radius){
 
     //go through the front laser points and create a polygon point list
     if(!s->front_laser && !s->rear_laser)
@@ -154,7 +154,7 @@ polygon2d_t *free_poly(check_gridmap_t *s, double max_radius){
     if (!bot_frames_get_trans_mat_3x4_with_utime (s->frames, "SKIRT_FRONT",
                                                   "body", laser->utime,
                                                   front_sensor_to_body)) {
-        fprintf (stderr, "Error getting bot_frames transformation from Skirt front to local!\n");
+        fprintf (stderr, "Error getting bot_frames transformation from SKIRT_FRONT to body!\n");
         polygon2d_free(poly);
         return NULL;        
     }
@@ -163,7 +163,7 @@ polygon2d_t *free_poly(check_gridmap_t *s, double max_radius){
     if (!bot_frames_get_trans_mat_3x4_with_utime (s->frames, "body",
                                                   "local", laser->utime,
                                                   body_to_local)) {
-        fprintf (stderr, "Error getting bot_frames transformation from VELODYNE to local!\n");
+        fprintf (stderr, "Error getting bot_frames transformation from body to local!\n");
         polygon2d_free(poly);
         return NULL;  
       
@@ -209,6 +209,62 @@ polygon2d_t *free_poly(check_gridmap_t *s, double max_radius){
     pointlist2d_resize(plist, count);
     
     //fprintf(stderr,"Orig : %d Size : %d\n", size, count);
+    return poly;
+}
+
+
+// Defines a polygon approximation to a half circle of radius max_radius
+// for LIDAR with coordinate frame given by name
+polygon2d_t *free_semicircle_poly(check_gridmap_t *s, char *name, double max_range){
+
+    double fov = 180;
+    double dtheta = 1;
+    int size = floor (180/1 + 1);
+    polygon2d_t *poly = g_slice_new(polygon2d_t);
+    poly->nlists = 1;
+
+    pointlist2d_t *plist =  pointlist2d_new(size);
+
+    poly->pointlists = plist;
+
+    double lidar_to_body[12];
+    if (!bot_frames_get_trans_mat_3x4 (s->frames, name,
+                                       "body", lidar_to_body)) {
+        fprintf (stderr, "Error getting bot_frames transformation from %s to body!\n", name);
+        polygon2d_free(poly);
+        return NULL;        
+    }
+
+    double body_to_local[12];
+    if (!bot_frames_get_trans_mat_3x4 (s->frames, "body",
+                                                  "local", body_to_local)) {
+        fprintf (stderr, "Error getting bot_frames transformation from body to local!\n");
+        polygon2d_free(poly);
+        return NULL;  
+      
+    }
+    
+    double theta = 0;
+    for(int i=0; i < size; i++){
+            
+        double pos[3] = {.0,.0,.0};
+        
+        pos[0] = max_range*cos(bot_to_radians(theta)); 
+        pos[1] = max_range*sin(bot_to_radians(theta)); 
+            
+        double b_pos[3] = {.0,.0,.0};
+        bot_vector_affine_transform_3x4_3d (lidar_to_body, pos, b_pos);  
+                        
+        double l_pos[3] = {.0,.0,.0};
+        bot_vector_affine_transform_3x4_3d (body_to_local, b_pos, l_pos);  
+        
+        plist->points[i].x = l_pos[0];
+        plist->points[i].y = l_pos[1];
+        theta += i*dtheta;
+    }
+    
+    //pointlist2d_resize(plist, count);
+    
     return poly;
 }
 
@@ -919,21 +975,27 @@ static void *render_thread(void *user)
                  //fill a polygon - that goes up to the laser points 
 
                  // This should be updated to operate on each LIDAR separately
+                 // Carve out a polygon the geometry of which is dictated by
+                 // the LIDAR returns (up to a certain range)
                  if(self->front_laser) {// && self->rear_laser){
                      //fprintf(stderr,"Finding clearing\n");
-                     polygon2d_t *circle_poly = free_poly(self, CARVE_LOCAL_RADIUS_SIZE);
-                     gridmap_polygon_fill (new_obsmap, circle_poly, 0);
-                     polygon2d_free(circle_poly);
+                     polygon2d_t *lidar_poly = free_lidar_poly(self, CARVE_LOCAL_RADIUS_SIZE);
+                     gridmap_polygon_fill (new_obsmap, lidar_poly, 0);
+                     polygon2d_free(lidar_poly);
                  }
 
                  else{
-                     //fprintf(stderr," -------------------Carving out map \n");
-                     polygon2d_t *circle_poly = polygon2d_new_circle( (double) bot_pose.pos[0], (double) bot_pose.pos[1], 
-                                                                      CARVE_LOCAL_RADIUS_SIZE, CARVE_LOCAL_RESOLUTION);
+                     //fprintf(stdout," -------------------Carving out map \n");
+                     polygon2d_t *semicircle_poly = free_semicircle_poly (self, "SKIRT_FRONT", CARVE_LOCAL_RADIUS_SIZE);
+                     //polygon2d_t *circle_poly = polygon2d_new_circle( (double) bot_pose.pos[0], (double) bot_pose.pos[1], 
+                     //                                               CARVE_LOCAL_RADIUS_SIZE, CARVE_LOCAL_RESOLUTION);
                      
                      
-                     gridmap_polygon_fill (new_obsmap, circle_poly, 0);
-                     polygon2d_free(circle_poly);
+                     //gridmap_polygon_fill (new_obsmap, circle_poly, 0);
+                     //polygon2d_free(circle_poly);
+                                                                      //if (semicircle_poly)
+                     gridmap_polygon_fill (new_obsmap, semicircle_poly, 0);
+                     polygon2d_free(semicircle_poly);
                  }
             }
         }
@@ -1467,18 +1529,18 @@ check_gridmap_t *check_gridmap_create_laser(const int constraints, gboolean rend
         
     
     self->gridmap_lut = gridmap_lut_create_cliff_restricted_linear(256, 
-                                   0.1, //0.3 - works - mostly
-                                   0.1, //0.2 - works mostly
-                                   0, // restricted
-                                   255, 0);
+                                                                   0.15, //0.1 //0.3 - works - mostly
+                                                                   0.1, //0.2 - works mostly
+                                                                   0, // restricted
+                                                                   255, 0);
    
     for (int i = 0; i < NUM_OBST_LUTS; i++) {
         double extra_radius = i * failsafe_fudge;
         self->obst_luts[i] = gridmap_lut_create_cliff_restricted_linear(256, 
-                                                                     self->convolve_radius + 0.0 + extra_radius, 
-                                                                     self->convolve_radius + extra_radius,
-                                                                     0, // restricted
-                                                                     255, 0);
+                                                                        self->convolve_radius + 0.0 + extra_radius, 
+                                                                        self->convolve_radius + extra_radius,
+                                                                        0, // restricted
+                                                                        255, 0);
         //self->obst_luts[i] = gridmap_lut_create_cliff_restricted_cos(256, 
         //                                                             self->convolve_radius + 3.0 + extra_radius, 
         //                                                             self->convolve_radius + extra_radius,
