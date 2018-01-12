@@ -1529,7 +1529,7 @@ check_gridmap_t *check_gridmap_create_laser(const int constraints, gboolean rend
         
     
     self->gridmap_lut = gridmap_lut_create_cliff_restricted_linear(256, 
-                                                                   0.15, //0.1 //0.3 - works - mostly
+                                                                   0.3, //0.15, //0.1 //0.3 - works - mostly
                                                                    0.2, //0.1, //0.2 - works mostly
                                                                    0, // restricted
                                                                    255, 0);
