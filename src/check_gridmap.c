@@ -1520,7 +1520,7 @@ check_gridmap_t *check_gridmap_create_laser(const int constraints, gboolean rend
     printf("check_gridmap(): INFO: obsmap_offsets:(%0.2lf,%0.2lf)\n",self->obsmap_offsets[0],self->obsmap_offsets[1]);
 
 
-    double failsafe_fudge = 0;//0.15;
+    double failsafe_fudge = 0.1; //0;//0.15;
     bot_param_get_double(self->param, "motion_planner.gridmap.failsafe_fudge",&failsafe_fudge);
     printf("check_gridmap(): INFO:\n");
     printf("check_gridmap(): INFO: failsafe fudge:%0.2lf\n",failsafe_fudge);
@@ -1530,7 +1530,7 @@ check_gridmap_t *check_gridmap_create_laser(const int constraints, gboolean rend
     
     self->gridmap_lut = gridmap_lut_create_cliff_restricted_linear(256, 
                                                                    0.15, //0.1 //0.3 - works - mostly
-                                                                   0.1, //0.2 - works mostly
+                                                                   0.2, //0.1, //0.2 - works mostly
                                                                    0, // restricted
                                                                    255, 0);
    
