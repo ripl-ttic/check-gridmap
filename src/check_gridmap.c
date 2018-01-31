@@ -29,12 +29,15 @@
 
 #define GLOBAL_MAP_TIMEOUT 30
 
+// These aren't used
 #define TWO_WAY_DILATION_RATIO 0.1
 #define TWO_WAY_DILATION_MAX 9
 
+// These aren't used
 #define ONE_WAY_DILATION_RATIO 0.2
 #define ONE_WAY_DILATION_MAX 13.5
 
+// These aren't used
 #define FAILSAFE_DILATION_RATIO 0.5
 #define FAILSAFE_DILATION_MIN 5
 #define FAILSAFE_DILATION_MAX 15
@@ -68,7 +71,7 @@
 #define TRACK_FORWARD_PROPAGATION_TIME 2.0
 #define TRACK_ZONE_PROPAGATION_TIME 2.0
 
-#define CARVE_LOCAL_RADIUS_SIZE 5.0 //3.0
+#define CARVE_LOCAL_RADIUS_SIZE 3.0 //5.0 //3.0
 #define OBS_THRESHOLD 1
 #define CARVE_LOCAL_RESOLUTION 36
 
@@ -1528,18 +1531,21 @@ check_gridmap_t *check_gridmap_create_laser(const int constraints, gboolean rend
     printf ("check_gridmap(): INFO:\n check_gridmap(): INFO: Copying Gridmap : %d\n", !self->sensing_only_small );
         
     
+    // Max value out to cliff distance, then linearly decrease to max_dist
+    // cliff distance should be <= max distance
     self->gridmap_lut = gridmap_lut_create_cliff_restricted_linear(256, 
-                                                                   0.3, //0.15, //0.1 //0.3 - works - mostly
-                                                                   0.2, //0.1, //0.2 - works mostly
-                                                                   0, // restricted
-                                                                   255, 0);
+                                                                   0.5, //0.15, //0.1 //0.3 - works - mostly // max_dist
+                                                                   0.3, //0.1, //0.2 - works mostly // cliff
+                                                                   0, // restricted distance
+                                                                   255, // max value
+                                                                   0); // restricted
    
     for (int i = 0; i < NUM_OBST_LUTS; i++) {
         double extra_radius = i * failsafe_fudge;
         self->obst_luts[i] = gridmap_lut_create_cliff_restricted_linear(256, 
-                                                                        self->convolve_radius + 0.0 + extra_radius, 
-                                                                        self->convolve_radius + extra_radius,
-                                                                        0, // restricted
+                                                                        self->convolve_radius + 0.0 + extra_radius, // max_dist
+                                                                        self->convolve_radius + extra_radius, // cliff_dist
+                                                                        0, // restricted distance
                                                                         255, 0);
         //self->obst_luts[i] = gridmap_lut_create_cliff_restricted_cos(256, 
         //                                                             self->convolve_radius + 3.0 + extra_radius, 
