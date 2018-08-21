@@ -15,7 +15,7 @@
 #include <lcmtypes/erlcm_failsafe_t.h>
 #include <lcmtypes/bot_core_planar_lidar_t.h>
 
-#include <lcmtypes/bot_core.h>
+#include <lcmtypes/bot2_core.h>
 #include <bot_param/param_util.h>
 #include <bot_frames/bot_frames.h>
 
