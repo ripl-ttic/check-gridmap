@@ -21,15 +21,16 @@ pods_install_headers(check_gridmap.h message_buffer.h DESTINATION check_gridmap)
 # make the library public
 pods_install_libraries(check_gridmap)
 
-set(REQUIRED_LIBS 
+set(REQUIRED_LIBS
     lcm
-    bot2-core 
-    bot2-frames 
+    bot2-core
+    bot2-frames
     bot2-lcmgl-client
     hr-common
     carmen-utils
     lcmtypes_hr-lcmtypes
-    gthread-2.0 
+    lcmtypes_obstacle-detector
+    gthread-2.0
     glib-2.0
     geom-utils
     map3d_interface)

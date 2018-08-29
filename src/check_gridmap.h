@@ -10,8 +10,8 @@
 #include <lcmtypes/erlcm_goal_list_t.h>
 #include <lcmtypes/erlcm_navigator_plan_t.h>
 #include <lcmtypes/erlcm_navigator_status_t.h>
-#include <lcmtypes/erlcm_rect_list_t.h>
-#include <lcmtypes/erlcm_track_list_t.h>
+#include <lcmtypes/obs_rect_list_t.h>
+#include <lcmtypes/obs_track_list_t.h>
 #include <lcmtypes/erlcm_failsafe_t.h>
 #include <lcmtypes/bot_core_planar_lidar_t.h>
 
@@ -78,7 +78,7 @@ typedef struct {
     gridmap_lut_t       *obst_luts[NUM_OBST_LUTS]; // e.g. rects
     gridmap_lut_t       *gridmap_lut;
     gridmap_lut_t       *self_feasibility_lut;     // used to carve out infeasibility on our vehicle
-    
+
     // we use two threads: one is the glib thread and listens to goals
     // and obstacles, and prepares gridmaps. The second thread processes
     // another problem. The mutex must be acquired when:
@@ -102,26 +102,26 @@ typedef struct {
     int64_t              failsafe_utime;
 
     erlcm_map_t global_map;
-    uint8_t *complete_global_map; 
+    uint8_t *complete_global_map;
 
 } check_gridmap_t;
 
 //=========================================================================
 // one-time init/cleanup
-check_gridmap_t * check_gridmap_create_laser(const int constraints, gboolean render_traj, 
-                                       gboolean sensing_only_local, 
+check_gridmap_t * check_gridmap_create_laser(const int constraints, gboolean render_traj,
+                                       gboolean sensing_only_local,
                                        gboolean sensing_only_small,
-                                       gboolean publish_gridmap, 
-                                       gboolean clear_person, 
-                                       gboolean ignore_local, 
-                                       gboolean clear_using_laser, 
+                                       gboolean publish_gridmap,
+                                       gboolean clear_person,
+                                       gboolean ignore_local,
+                                       gboolean clear_using_laser,
                                        double width_buffer);
 
-check_gridmap_t * check_gridmap_create(const int constraints, gboolean render_traj, 
+check_gridmap_t * check_gridmap_create(const int constraints, gboolean render_traj,
                                        gboolean sensing_only_local, gboolean sensing_only_small,
-                                       gboolean publish_gridmap, 
-                                       gboolean clear_person, 
-                                       gboolean ignore_local, 
+                                       gboolean publish_gridmap,
+                                       gboolean clear_person,
+                                       gboolean ignore_local,
                                        double width_buffer);
 
 void check_gridmap_destroy(check_gridmap_t *cg);
@@ -150,7 +150,7 @@ struct check_path_result
 // failsafe - when failsafe >= 1, reduce vehicle width by failsafe * FAILSAFE_WIDTH_FACTOR
 void
 check_gridmap_check_path (check_gridmap_t *self, int is_forward, int failsafe,
-                          double x0, double y0, double theta0, 
+                          double x0, double y0, double theta0,
                           double x1, double y1, double theta1,
                           struct check_path_result *res);
 
@@ -168,15 +168,15 @@ int check_gridmap_check_point(check_gridmap_t *self,
 void check_gridmap_check_speed(check_gridmap_t *self, int is_forward,
 			       double x0, double y0, double theta0,
 			       double x1, double y1, double theta1,
-			       double *max_cost, double *speed_limit); 
+			       double *max_cost, double *speed_limit);
 
 int check_gridmap_get_slower_region(check_gridmap_t *self,
                                     double *xy,
                                     double *range, double *speed_limit);
 
 
-double 
-check_gridmap_convolve_radius(check_gridmap_t *self); 
+double
+check_gridmap_convolve_radius(check_gridmap_t *self);
 
 
 #ifdef __cplusplus
