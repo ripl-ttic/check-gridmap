@@ -7,12 +7,12 @@
 #include <interfaces/map3d_interface.h>
 
 
-#include <lcmtypes/erlcm_goal_list_t.h>
-#include <lcmtypes/erlcm_navigator_plan_t.h>
-#include <lcmtypes/erlcm_navigator_status_t.h>
+#include <lcmtypes/ripl_goal_list_t.h>
+#include <lcmtypes/ripl_navigator_plan_t.h>
+#include <lcmtypes/ripl_navigator_status_t.h>
 #include <lcmtypes/obs_rect_list_t.h>
 #include <lcmtypes/obs_track_list_t.h>
-#include <lcmtypes/erlcm_failsafe_t.h>
+#include <lcmtypes/ripl_failsafe_t.h>
 #include <lcmtypes/bot_core_planar_lidar_t.h>
 
 #include <lcmtypes/bot2_core.h>
@@ -101,7 +101,7 @@ typedef struct {
     double               failsafe_timer;
     int64_t              failsafe_utime;
 
-    erlcm_map_t global_map;
+    ripl_map_t global_map;
     uint8_t *complete_global_map;
 
 } check_gridmap_t;
