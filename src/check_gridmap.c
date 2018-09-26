@@ -49,12 +49,12 @@
 
 // WANNA SEE EVERY ONE? make it much bigger than 10
 // (WILL ONLY SEND AS FAST AS RENDER THREAD)
-//#define GRIDMAP_SEND_HZ   10.0
 #define GRIDMAP_SEND_HZ   20.0
 
 // Parameters for full- and small-size gridmaps
+// These settings are overridden by those set in BotParam file (if any)
 #define GRIDMAP_RANGE       20.0
-#define GRIDMAP_FORWARD_OFFSET  10.0
+#define GRIDMAP_FORWARD_OFFSET  5.0
 #define GRIDMAP_RESOLUTION   0.05//0.10
 
 #define GRIDMAP_RANGE_SMALL       6.0 //4.0
@@ -859,13 +859,7 @@ static void *render_thread(void *user)
 
         // place center of the gridmap in front of the vehicle.
         // we don't need to render 100m behind us.
-        double gridmap_forward_offset;
-        if (self->sensing_only_small)
-            gridmap_forward_offset = GRIDMAP_FORWARD_OFFSET_SMALL;
-        else
-            gridmap_forward_offset = GRIDMAP_FORWARD_OFFSET;
-
-        double forward_pos[3] = {gridmap_forward_offset, 0.0, 0.0};
+        double forward_pos[3] = {self->forward_offset, 0.0, 0.0};
         bot_core_pose_t bot_pose;
 
         if (!get_local_pose (self, &bot_pose))
@@ -882,19 +876,9 @@ static void *render_thread(void *user)
 
         // create gridmap for static scene: contains rects.
         // the two gridmaps must be exactly aligned.
-        double gridmap_range, gridmap_resolution;
-        if (self->sensing_only_small) {
-            gridmap_range = GRIDMAP_RANGE_SMALL;
-            gridmap_resolution = GRIDMAP_RESOLUTION_SMALL;
-        }
-        else {
-            gridmap_range = GRIDMAP_RANGE;
-            gridmap_resolution = GRIDMAP_RESOLUTION;
-        }
-
         gridmap_t *new_obsmap = gridmap_create_fill(forward_pos[0], forward_pos[1],
-                                                    2 * gridmap_range, 2 * gridmap_range,
-                                                    gridmap_resolution, 0);
+                                                    2 * self->range, 2 * self->range,
+                                                    self->resolution, 0);
 
         // Incorporate the global map if we are maintaining a full gridmap (i.e., not sensing_only_small mode)
         if (self->sensing_only_small == FALSE) {
@@ -918,14 +902,14 @@ static void *render_thread(void *user)
                                                                self->global_map.config.resolution, &cx, &cy);
 
 
-                int x_min = fmax(0, cx - GRIDMAP_RANGE / GRIDMAP_RESOLUTION);
-                int x_max = fmin(self->global_map.config.x_size-1, cx + GRIDMAP_RANGE / GRIDMAP_RESOLUTION);
+                int x_min = fmax(0, cx - self->range / self->resolution);
+                int x_max = fmin(self->global_map.config.x_size-1, cx + self->range / self->resolution);
 
-                int y_min = fmax(0, cy - GRIDMAP_RANGE / GRIDMAP_RESOLUTION);
-                int y_max = fmin(self->global_map.config.y_size-1, cy + GRIDMAP_RANGE / GRIDMAP_RESOLUTION);
+                int y_min = fmax(0, cy - self->range / self->resolution);
+                int y_max = fmin(self->global_map.config.y_size-1, cy + self->range / self->resolution);
 
-                int ix_min = fmax(0, GRIDMAP_RANGE / GRIDMAP_RESOLUTION - cx);
-                int iy_min = fmax(0, GRIDMAP_RANGE / GRIDMAP_RESOLUTION - cy);
+                int ix_min = fmax(0, self->range / self->resolution - cx);
+                int iy_min = fmax(0, self->range / self->resolution - cy);
 
                 int ix_span = x_max - x_min;
 
@@ -1439,7 +1423,7 @@ check_gridmap_t *check_gridmap_create_laser(const int constraints, gboolean rend
 
     // When in sensing_only_small mode, only local sensing will be used (i.e., no carmen map)
     if (self->sensing_only_small)
-        fprintf (stderr, "check_gridmap(): Maintaining a spatially compact gridmap based only on locally-perceived obstacles\n");
+        fprintf (stdout, "check_gridmap(): Maintaining a spatially compact gridmap based only on locally-perceived obstacles\n");
     if (self->sensing_only_small && !self->sensing_only_local) {
         fprintf (stderr, "check_gridmap(): Ignoring sensing_only_local = FALSE setting\n");
         self->sensing_only_local = TRUE;
@@ -1492,12 +1476,53 @@ check_gridmap_t *check_gridmap_create_laser(const int constraints, gboolean rend
         (bot_param_get_double_array(self->param, "calibration.vehicle_bounds.rear_right", rear_right, 2) != 2))
         abort();
 
+    double range;
+    double forward_offset;
+    double resolution;
+    if (!sensing_only_small) {
+	if(!bot_param_get_double (self->param, "motion_planning.gridmap.range", &range))
+	    self->range = range;
+	else
+	    self->range = GRIDMAP_RANGE;
+
+	if(!bot_param_get_double (self->param, "motion_planning.gridmap.forward_offset", &forward_offset))
+	    self->forward_offset = forward_offset;
+	else
+	    self->forward_offset = GRIDMAP_FORWARD_OFFSET;
+
+	if(!bot_param_get_double (self->param, "motion_planning.gridmap.resolution", &resolution))
+	    self->resolution = resolution;
+	else
+	    self->resolution = GRIDMAP_RESOLUTION;
+    } else {
+	if(!bot_param_get_double (self->param, "motion_planning.gridmap.range_small", &range))
+	    self->range = range;
+	else
+	    self->range = GRIDMAP_RANGE;
+
+	if(!bot_param_get_double (self->param, "motion_planning.gridmap.forward_offset_small", &forward_offset))
+	    self->forward_offset = forward_offset;
+	else
+	    self->forward_offset = GRIDMAP_FORWARD_OFFSET;
+
+	if(!bot_param_get_double (self->param, "motion_planning.gridmap.resolution_small", &resolution))
+	    self->resolution = resolution;
+	else
+	    self->resolution = GRIDMAP_RESOLUTION;
+    }
+
+
+    printf("check_gridmap(): INFO:\n");
+    if (sensing_only_local)
+	printf("check_gridmap(): INFO: Using only obstacle detections for collision checking around robot (sensing_only_local is True\n");
+
+    
     self->overall_width = fmax(front_left[1]-front_right[1],rear_left[1]-rear_right[1]);
     self->overall_length = fmax(front_left[0]-rear_left[0],front_right[0]-rear_right[0]);
 
     printf("check_gridmap(): INFO:\n");
-    printf("check_gridmap(): INFO: overall footprint width:%0.2lf\n",self->overall_width);
-    printf("check_gridmap(): INFO: overall footprint length:%0.2lf\n",self->overall_length);
+    printf("check_gridmap(): INFO: overall footprint width:  %0.2lf\n",self->overall_width);
+    printf("check_gridmap(): INFO: overall footprint length: %0.2lf\n",self->overall_length);
 
 
     // create render tables
@@ -1517,19 +1542,19 @@ check_gridmap_t *check_gridmap_create_laser(const int constraints, gboolean rend
 
 
     printf("check_gridmap(): INFO:\n");
-    printf("check_gridmap(): INFO: convolve line searches:%d\n",self->convolve_line_searches);
-    printf("check_gridmap(): INFO: convolve total width:%0.2lf\n",self->convolve_total_width);
-    printf("check_gridmap(): INFO: convolve radius:%0.2lf\n",self->convolve_radius);
+    printf("check_gridmap(): INFO: convolve line searches: %d\n",self->convolve_line_searches);
+    printf("check_gridmap(): INFO: convolve total width:   %0.2lf\n",self->convolve_total_width);
+    printf("check_gridmap(): INFO: convolve radius:        %0.2lf\n",self->convolve_radius);
     printf("check_gridmap(): INFO:\n");
-    printf("check_gridmap(): INFO: obsmap_offsets:(%0.2lf,%0.2lf)\n",self->obsmap_offsets[0],self->obsmap_offsets[1]);
+    printf("check_gridmap(): INFO: obsmap_offsets: (%0.2lf, %0.2lf)\n",self->obsmap_offsets[0],self->obsmap_offsets[1]);
 
 
     double failsafe_fudge = 0.1; //0;//0.15;
     bot_param_get_double(self->param, "motion_planner.gridmap.failsafe_fudge",&failsafe_fudge);
     printf("check_gridmap(): INFO:\n");
-    printf("check_gridmap(): INFO: failsafe fudge:%0.2lf\n",failsafe_fudge);
+    printf("check_gridmap(): INFO: failsafe fudge: %0.2lf\n",failsafe_fudge);
 
-    printf ("check_gridmap(): INFO:\n check_gridmap(): INFO: Copying Gridmap : %d\n", !self->sensing_only_small );
+    printf ("check_gridmap(): INFO:\ncheck_gridmap(): INFO: Copying Gridmap : %d\n", !self->sensing_only_small );
 
 
     // Max value out to cliff distance, then linearly decrease to max_dist
@@ -1570,7 +1595,9 @@ check_gridmap_t *check_gridmap_create_laser(const int constraints, gboolean rend
                                                                                 255); // max
 
     printf("check_gridmap(): INFO:\n");
-    printf("check_gridmap(): INFO: gridmap resolution:%0.2lf\n",GRIDMAP_RESOLUTION);
+    printf("check_gridmap(): INFO: gridmap width/height (range): %0.2lf\n",self->range);
+    printf("check_gridmap(): INFO: gridmap forward offset:       %0.2lf\n",self->forward_offset);
+    printf("check_gridmap(): INFO: gridmap resolution:           %0.2lf\n",self->resolution);
 
     ripl_navigator_plan_t_subscribe(self->lcm, "NAVIGATOR_PLAN", on_nav_plan, self);
     ripl_navigator_status_t_subscribe(self->lcm, "NAVIGATOR_STATUS", on_nav_status, self);

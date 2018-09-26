@@ -71,6 +71,11 @@ typedef struct {
     double               convolve_total_width;       // total footprint width
     double               convolve_radius;            // invariant: convolve_total_width / convolve_line_searches / 2.0
 
+    // gridmap sizes (set to values specified in BotParam if available, else #define in check_gridmap.c)
+    double               range;                      // width and height of the gridmap
+    double               forward_offset;             // how far ahead of robot to center gridmap
+    double               resolution;                 // gridmap resolution
+  
     double               obsmap_offsets[2];
 
     // rate at which uncertain lanes dilate
