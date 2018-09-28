@@ -10,9 +10,13 @@
 
 #include <lcmtypes/bot_core_planar_lidar_t.h>
 
+#include <lcmtypes/gridmap_lcmtypes.h>
 #include <lcmtypes/ripl_goal_list_t.h>
-#include <lcmtypes/ripl_navigator_plan_t.h>
-#include <lcmtypes/ripl_navigator_status_t.h>
+#include <lcmtypes/ripl_guide_info_t.h>
+
+
+//#include <lcmtypes/ripl_navigator_plan_t.h>
+//#include <lcmtypes/ripl_navigator_status_t.h>
 #include <lcmtypes/obs_rect_list_t.h>
 #include <lcmtypes/obs_track_list_t.h>
 #include <lcmtypes/ripl_failsafe_t.h>
@@ -53,7 +57,7 @@ typedef struct {
     // non-"new" variants are those sampled from "new" currently
     // being used by the render thread.
     message_buffer_t    *nav_status_buffer;
-    message_buffer_t    *nav_plan_buffer;
+    //message_buffer_t    *nav_plan_buffer;
     message_buffer_t    *rects_buffer;
     message_buffer_t    *sim_rects_buffer;
     message_buffer_t    *map_rects_buffer;

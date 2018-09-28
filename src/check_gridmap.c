@@ -18,7 +18,6 @@
 #include <bot_lcmgl_client/lcmgl.h>
 #include <bot_frames/bot_frames.h>
 
-#include <lcmtypes/hr_lcmtypes.h>
 #include <lcmtypes/obs_lcmtypes.h>
 
 #include "message_buffer.h"
@@ -335,21 +334,21 @@ void guide_pos_handler(const lcm_recv_buf_t *rbuf __attribute__((unused)), const
     message_buffer_give(self->person_buffer, ripl_guide_info_t_copy(msg));
 }
 
-static void
-on_nav_plan(const lcm_recv_buf_t * rbuf, const char *channel,
-            const ripl_navigator_plan_t *msg, void *user)
-{
-    check_gridmap_t *self = (check_gridmap_t*) user;
-    message_buffer_give(self->nav_plan_buffer, ripl_navigator_plan_t_copy(msg));
-}
+// static void
+// on_nav_plan(const lcm_recv_buf_t * rbuf, const char *channel,
+//             const ripl_navigator_plan_t *msg, void *user)
+// {
+//     check_gridmap_t *self = (check_gridmap_t*) user;
+//     message_buffer_give(self->nav_plan_buffer, ripl_navigator_plan_t_copy(msg));
+// }
 
-static void
-on_nav_status(const lcm_recv_buf_t * rbuf, const char *channel,
-              const ripl_navigator_status_t *msg, void *user)
-{
-    check_gridmap_t *self = (check_gridmap_t*) user;
-    message_buffer_give(self->nav_status_buffer, ripl_navigator_status_t_copy(msg));
-}
+// static void
+// on_nav_status(const lcm_recv_buf_t * rbuf, const char *channel,
+//               const ripl_navigator_status_t *msg, void *user)
+// {
+//     check_gridmap_t *self = (check_gridmap_t*) user;
+//     message_buffer_give(self->nav_status_buffer, ripl_navigator_status_t_copy(msg));
+// }
 
 static void
 on_sim_rects(const lcm_recv_buf_t * rbuf, const char *channel,
@@ -411,10 +410,10 @@ static void draw_obs_gridmap(check_gridmap_t *self, gridmap_t *gm)
     if (!get_local_pos_heading(self, pos, &heading))
         return;
 
-    ripl_navigator_status_t *nav_status = message_buffer_get(self->nav_status_buffer);
+    //ripl_navigator_status_t *nav_status = message_buffer_get(self->nav_status_buffer);
 
     // Find goal position
-    ripl_navigator_plan_t *nav_plan = message_buffer_get(self->nav_plan_buffer);
+    //ripl_navigator_plan_t *nav_plan = message_buffer_get(self->nav_plan_buffer);
 
 
     int64_t ti = bot_timestamp_now();
@@ -621,14 +620,14 @@ static void draw_obs_gridmap(check_gridmap_t *self, gridmap_t *gm)
         printf("render_estop: ti:%lf\n",t);
 }
 
-static void send_velocity_advice(check_gridmap_t *self)
-{
-
-    ripl_navigator_plan_t *nav_plan = message_buffer_get(self->nav_plan_buffer);
-    ripl_navigator_status_t *nav_status = message_buffer_get(self->nav_status_buffer);
-    if (!nav_plan || !nav_status)
-        return;
-}
+// static void send_velocity_advice(check_gridmap_t *self)
+// {
+//
+//     ripl_navigator_plan_t *nav_plan = message_buffer_get(self->nav_plan_buffer);
+//     ripl_navigator_status_t *nav_status = message_buffer_get(self->nav_status_buffer);
+//     if (!nav_plan || !nav_status)
+//         return;
+// }
 
 
 // 1. fill
@@ -1455,8 +1454,8 @@ check_gridmap_t *check_gridmap_create_laser(const int constraints, gboolean rend
     if(self->clear_person){
       self->person_buffer = message_buffer_create((message_buffer_free_func_t) ripl_guide_info_t_destroy);
     }
-    self->nav_status_buffer = message_buffer_create((message_buffer_free_func_t) ripl_navigator_status_t_destroy);
-    self->nav_plan_buffer = message_buffer_create((message_buffer_free_func_t) ripl_navigator_plan_t_destroy);
+    //self->nav_status_buffer = message_buffer_create((message_buffer_free_func_t) ripl_navigator_status_t_destroy);
+    //self->nav_plan_buffer = message_buffer_create((message_buffer_free_func_t) ripl_navigator_plan_t_destroy);
     self->rects_buffer = message_buffer_create((message_buffer_free_func_t) obs_rect_list_t_destroy);
     self->sim_rects_buffer = message_buffer_create((message_buffer_free_func_t) obs_rect_list_t_destroy);
     self->map_rects_buffer = message_buffer_create((message_buffer_free_func_t) obs_rect_list_t_destroy);
@@ -1516,7 +1515,7 @@ check_gridmap_t *check_gridmap_create_laser(const int constraints, gboolean rend
     if (sensing_only_local)
 	printf("check_gridmap(): INFO: Using only obstacle detections for collision checking around robot (sensing_only_local is True\n");
 
-    
+
     self->overall_width = fmax(front_left[1]-front_right[1],rear_left[1]-rear_right[1]);
     self->overall_length = fmax(front_left[0]-rear_left[0],front_right[0]-rear_right[0]);
 
@@ -1599,8 +1598,8 @@ check_gridmap_t *check_gridmap_create_laser(const int constraints, gboolean rend
     printf("check_gridmap(): INFO: gridmap forward offset:       %0.2lf\n",self->forward_offset);
     printf("check_gridmap(): INFO: gridmap resolution:           %0.2lf\n",self->resolution);
 
-    ripl_navigator_plan_t_subscribe(self->lcm, "NAVIGATOR_PLAN", on_nav_plan, self);
-    ripl_navigator_status_t_subscribe(self->lcm, "NAVIGATOR_STATUS", on_nav_status, self);
+    //ripl_navigator_plan_t_subscribe(self->lcm, "NAVIGATOR_PLAN", on_nav_plan, self);
+    //ripl_navigator_status_t_subscribe(self->lcm, "NAVIGATOR_STATUS", on_nav_status, self);
     ripl_goal_list_t_subscribe(self->lcm, "GOALS", on_goals, self);
 
     // Don't account for sim_rects if we are in sensing_only_small mode
@@ -1664,10 +1663,10 @@ void check_gridmap_destroy(check_gridmap_t *self)
     // Free message buffers
     if (self->goals_buffer)
         message_buffer_destroy (self->goals_buffer);
-    if (self->nav_status_buffer)
-        message_buffer_destroy (self->nav_status_buffer);
-    if (self->nav_plan_buffer)
-        message_buffer_destroy (self->nav_plan_buffer);
+    //if (self->a_buffer)
+    //    message_buffer_destroy (self->nav_status_buffer);
+    //if (self->nav_plan_buffer)
+    //    message_buffer_destroy (self->nav_plan_buffer);
     if (self->rects_buffer)
         message_buffer_destroy (self->rects_buffer);
     if (self->sim_rects_buffer)
