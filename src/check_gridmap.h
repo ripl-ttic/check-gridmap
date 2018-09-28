@@ -13,6 +13,7 @@
 #include <lcmtypes/gridmap_lcmtypes.h>
 #include <lcmtypes/ripl_goal_list_t.h>
 #include <lcmtypes/ripl_guide_info_t.h>
+#include <lcmtypes/ripl_map_request_msg_t.h>
 
 
 //#include <lcmtypes/ripl_navigator_plan_t.h>
