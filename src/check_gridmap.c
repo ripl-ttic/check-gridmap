@@ -18,7 +18,7 @@
 #include <bot_lcmgl_client/lcmgl.h>
 #include <bot_frames/bot_frames.h>
 
-#include <lcmtypes/obs_lcmtypes.h>
+#include <lcmtypes/obstacle_detection_lcmtypes.h>
 
 #include "message_buffer.h"
 #include "check_gridmap.h"
