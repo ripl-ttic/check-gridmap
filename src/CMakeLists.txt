@@ -30,6 +30,7 @@ set(REQUIRED_LIBS
     carmen-utils
     lcmtypes_hr-lcmtypes
     lcmtypes_obstacle-detector
+    lcmtypes_map
     gthread-2.0
     glib-2.0
     geom-utils
