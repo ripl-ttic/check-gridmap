@@ -26,7 +26,7 @@ set(REQUIRED_LIBS
     bot2-core
     bot2-frames
     bot2-lcmgl-client
-    hr-common
+    gridmap-utils
     carmen-utils
     lcmtypes_hr-lcmtypes
     lcmtypes_obstacle-detector

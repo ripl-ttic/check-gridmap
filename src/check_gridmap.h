@@ -1,11 +1,14 @@
 #ifndef __check_gridmap_h__
 #define __check_gridmap_h__
 
-#include <hr_common/gridmap.h>
-#include <hr_common/gridmap_util.h>
-#include "message_buffer.h"
+#include <bot_param/param_util.h>
+#include <bot_frames/bot_frames.h>
+
+#include <gridmap_utils/gridmap.h>
+#include <gridmap_utils/gridmap_util.h>
 #include <interfaces/map3d_interface.h>
 
+#include <lcmtypes/bot_core_planar_lidar_t.h>
 
 #include <lcmtypes/ripl_goal_list_t.h>
 #include <lcmtypes/ripl_navigator_plan_t.h>
@@ -13,11 +16,11 @@
 #include <lcmtypes/obs_rect_list_t.h>
 #include <lcmtypes/obs_track_list_t.h>
 #include <lcmtypes/ripl_failsafe_t.h>
-#include <lcmtypes/bot_core_planar_lidar_t.h>
 
 #include <lcmtypes/bot2_core.h>
-#include <bot_param/param_util.h>
-#include <bot_frames/bot_frames.h>
+
+#include "message_buffer.h"
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -75,7 +78,7 @@ typedef struct {
     double               range;                      // width and height of the gridmap
     double               forward_offset;             // how far ahead of robot to center gridmap
     double               resolution;                 // gridmap resolution
-  
+
     double               obsmap_offsets[2];
 
     // rate at which uncertain lanes dilate
