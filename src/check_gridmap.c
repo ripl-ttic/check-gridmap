@@ -1479,32 +1479,32 @@ check_gridmap_t *check_gridmap_create_laser(const int constraints, gboolean rend
     double forward_offset;
     double resolution;
     if (!sensing_only_small) {
-	if(!bot_param_get_double (self->param, "motion_planning.gridmap.range", &range))
+	if(!bot_param_get_double (self->param, "motion_planner.gridmap.range", &range))
 	    self->range = range;
 	else
 	    self->range = GRIDMAP_RANGE;
 
-	if(!bot_param_get_double (self->param, "motion_planning.gridmap.forward_offset", &forward_offset))
+	if(!bot_param_get_double (self->param, "motion_planner.gridmap.forward_offset", &forward_offset))
 	    self->forward_offset = forward_offset;
 	else
 	    self->forward_offset = GRIDMAP_FORWARD_OFFSET;
 
-	if(!bot_param_get_double (self->param, "motion_planning.gridmap.resolution", &resolution))
+	if(!bot_param_get_double (self->param, "motion_planner.gridmap.resolution", &resolution))
 	    self->resolution = resolution;
 	else
 	    self->resolution = GRIDMAP_RESOLUTION;
     } else {
-	if(!bot_param_get_double (self->param, "motion_planning.gridmap.range_small", &range))
+	if(!bot_param_get_double (self->param, "motion_planner.gridmap.range_small", &range))
 	    self->range = range;
 	else
 	    self->range = GRIDMAP_RANGE;
 
-	if(!bot_param_get_double (self->param, "motion_planning.gridmap.forward_offset_small", &forward_offset))
+	if(!bot_param_get_double (self->param, "motion_planner.gridmap.forward_offset_small", &forward_offset))
 	    self->forward_offset = forward_offset;
 	else
 	    self->forward_offset = GRIDMAP_FORWARD_OFFSET;
 
-	if(!bot_param_get_double (self->param, "motion_planning.gridmap.resolution_small", &resolution))
+	if(!bot_param_get_double (self->param, "motion_planner.gridmap.resolution_small", &resolution))
 	    self->resolution = resolution;
 	else
 	    self->resolution = GRIDMAP_RESOLUTION;
