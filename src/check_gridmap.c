@@ -325,15 +325,6 @@ on_goals(const lcm_recv_buf_t * rbuf, const char *channel,
     message_buffer_give(self->goals_buffer, ripl_goal_list_t_copy(msg));
 }
 
-static
-void guide_pos_handler(const lcm_recv_buf_t *rbuf __attribute__((unused)), const char * channel __attribute__((unused)),
-		       const ripl_guide_info_t * msg,
-		       void * user  __attribute__((unused)))
-{
-    check_gridmap_t *self = (check_gridmap_t*) user;
-    message_buffer_give(self->person_buffer, ripl_guide_info_t_copy(msg));
-}
-
 // static void
 // on_nav_plan(const lcm_recv_buf_t * rbuf, const char *channel,
 //             const ripl_navigator_plan_t *msg, void *user)
@@ -430,27 +421,10 @@ static void draw_obs_gridmap(check_gridmap_t *self, gridmap_t *gm)
     if (!get_local_pose (self, &bot_pose))
         return;
 
-    ripl_guide_info_t * p_msg = NULL;
-
     double person_pos[2] = {0,0};
 
     gboolean clear_person = FALSE;
 
-    if(self->clear_person){
-        p_msg = message_buffer_get(self->person_buffer);
-
-        if(p_msg && p_msg->tracking_state == 1){ //we have a track of the person
-            clear_person = TRUE;
-            double bot_rpy[3];
-            bot_quat_to_roll_pitch_yaw (bot_pose.orientation, bot_rpy);
-
-            //calculate the person's position
-            person_pos[0] = bot_pose.pos[0] + p_msg->pos[0] * cos(bot_rpy[2]) -  p_msg->pos[1] * sin(bot_rpy[2]);
-
-            person_pos[1] = bot_pose.pos[1] +  p_msg->pos[0] * sin(bot_rpy[2]) +
-                p_msg->pos[1] * cos(bot_rpy[2]);
-        }
-    }
     //-------------------------
     //--- Static rects
     obs_rect_list_t *rects = message_buffer_get(self->rects_buffer);
@@ -1451,10 +1425,6 @@ check_gridmap_t *check_gridmap_create_laser(const int constraints, gboolean rend
 
 
     self->goals_buffer = message_buffer_create((message_buffer_free_func_t) ripl_goal_list_t_destroy);
-    self->person_buffer = NULL;
-    if(self->clear_person){
-      self->person_buffer = message_buffer_create((message_buffer_free_func_t) ripl_guide_info_t_destroy);
-    }
     //self->nav_status_buffer = message_buffer_create((message_buffer_free_func_t) ripl_navigator_status_t_destroy);
     //self->nav_plan_buffer = message_buffer_create((message_buffer_free_func_t) ripl_navigator_plan_t_destroy);
     self->rects_buffer = message_buffer_create((message_buffer_free_func_t) obs_rect_list_t_destroy);
@@ -1636,9 +1606,6 @@ check_gridmap_t *check_gridmap_create_laser(const int constraints, gboolean rend
             self->sensing_only_small = TRUE;
         }
     }
-
-    if(self->clear_person)
-        ripl_guide_info_t_subscribe(self->lcm, "GUIDE_POS", guide_pos_handler, self);
 
     // do this last
     pthread_create(&self->render_thread, NULL, render_thread, self);
