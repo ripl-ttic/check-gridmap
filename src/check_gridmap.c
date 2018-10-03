@@ -1433,7 +1433,8 @@ check_gridmap_t *check_gridmap_create_laser(const int constraints, gboolean rend
     self->complete_global_map = NULL;
 
     if(clear_person){
-        self->clear_person = TRUE;
+        fprintf (stderr, "Person clearing is not supported. Setting clear_person to FALSE\n");
+        self->clear_person = FALSE;
     }
     else{
         self->clear_person = FALSE;

@@ -12,7 +12,6 @@
 
 #include <lcmtypes/gridmap_lcmtypes.h>
 #include <lcmtypes/ripl_goal_list_t.h>
-#include <lcmtypes/ripl_guide_info_t.h>
 #include <lcmtypes/ripl_map_request_msg_t.h>
 #include <lcmtypes/obs_rect_list_t.h>
 #include <lcmtypes/obs_track_list_t.h>
@@ -62,7 +61,6 @@ typedef struct {
     message_buffer_t    *sim_tracks_buffer;
     message_buffer_t    *sim_lanes_buffer;
     message_buffer_t    *goals_buffer;
-    message_buffer_t    *person_buffer;
 
     // used to create vehicle footprint
     double overall_width;
