@@ -28,7 +28,7 @@ set(REQUIRED_LIBS
     bot2-lcmgl-client
     gridmap-utils
     carmen-utils
-    lcmtypes_hr-lcmtypes
+    lcmtypes_ripl-general
     lcmtypes_obstacle-detector
     lcmtypes_map
     gthread-2.0
