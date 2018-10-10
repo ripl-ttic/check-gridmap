@@ -319,10 +319,10 @@ int get_local_pos_heading(check_gridmap_t *self, double pos[3], double *heading)
 //------------------------------------------
 static void
 on_goals(const lcm_recv_buf_t * rbuf, const char *channel,
-         const ripl_goal_list_t *msg, void *user)
+         const rrt_goal_list_t *msg, void *user)
 {
     check_gridmap_t *self = (check_gridmap_t*) user;
-    message_buffer_give(self->goals_buffer, ripl_goal_list_t_copy(msg));
+    message_buffer_give(self->goals_buffer, rrt_goal_list_t_copy(msg));
 }
 
 // static void
@@ -572,9 +572,9 @@ static void draw_obs_gridmap(check_gridmap_t *self, gridmap_t *gm)
     if (self->failsafe_timer>35) {
         // Unrestrict goal
         // if the goal is covered in restricted but we can otherwise go we should unrestrict the goal region.
-        ripl_goal_list_t *goals = message_buffer_get(self->goals_buffer);
+        rrt_goal_list_t *goals = message_buffer_get(self->goals_buffer);
         if (goals&&goals->num_goals) {
-            ripl_goal_t *goal = &goals->goals[0];
+            rrt_goal_t *goal = &goals->goals[0];
             double s, c;
             bot_fasttrig_sincos(goal->theta, &s, &c);
             gridmap_render_rectangle_min_keep_infeasible(gm,
@@ -616,7 +616,7 @@ static void draw_obs_gridmap(check_gridmap_t *self, gridmap_t *gm)
 
 //add map handler that takes in the wheelchair gridmap
 static void on_map_server_gridmap_rect(const lcm_recv_buf_t *rbuf, const char *channel,
-                                  const ripl_gridmap_t *msg, void *user)
+                                  const gmlcm_gridmap_t *msg, void *user)
 {
 
     check_gridmap_t *self = (check_gridmap_t *)user;
@@ -732,7 +732,7 @@ static void on_map_server_gridmap_rect(const lcm_recv_buf_t *rbuf, const char *c
 
 //add map handler that takes in the wheelchair gridmap
 static void on_map_server_gridmap(const lcm_recv_buf_t *rbuf, const char *channel,
-                                  const ripl_gridmap_t *msg, void *user)
+                                  const gmlcm_gridmap_t *msg, void *user)
 {
 
     check_gridmap_t *self = (check_gridmap_t *)user;
@@ -780,16 +780,16 @@ static void on_map_server_gridmap(const lcm_recv_buf_t *rbuf, const char *channe
 int get_global_map(check_gridmap_t *self)
 {
     /* subscripe to map, and wait for it to come in... */
-    ripl_map_request_msg_t msg;
+    maplcm_map_request_msg_t msg;
     msg.utime =  carmen_get_time()*1e6;
     msg.requesting_prog = "CHECK_GRIDMAP";
 
     if(0){
         //we are not using the rects method for now - seems to introduce a wierd offset
-        ripl_gridmap_t_subscribe(self->lcm, "MAP_SERVER", on_map_server_gridmap_rect, self);
+        gmlcm_gridmap_t_subscribe(self->lcm, "MAP_SERVER", on_map_server_gridmap_rect, self);
     }
     else{
-        ripl_gridmap_t_subscribe(self->lcm, "MAP_SERVER", on_map_server_gridmap, self);
+        gmlcm_gridmap_t_subscribe(self->lcm, "MAP_SERVER", on_map_server_gridmap, self);
     }
     int sent_map_req = 0;
 
@@ -798,7 +798,7 @@ int get_global_map(check_gridmap_t *self)
     while (self->global_map.map == NULL) {
         if(!sent_map_req){
             sent_map_req = 1;
-            ripl_map_request_msg_t_publish(self->lcm,"MAP_REQUEST_CHANNEL",&msg);
+            maplcm_map_request_msg_t_publish(self->lcm,"MAP_REQUEST",&msg);
         }
         //sleep();
         fprintf(stdout, ".");
@@ -1424,7 +1424,7 @@ check_gridmap_t *check_gridmap_create_laser(const int constraints, gboolean rend
 
 
 
-    self->goals_buffer = message_buffer_create((message_buffer_free_func_t) ripl_goal_list_t_destroy);
+    self->goals_buffer = message_buffer_create((message_buffer_free_func_t) rrt_goal_list_t_destroy);
     //self->nav_status_buffer = message_buffer_create((message_buffer_free_func_t) ripl_navigator_status_t_destroy);
     //self->nav_plan_buffer = message_buffer_create((message_buffer_free_func_t) ripl_navigator_plan_t_destroy);
     self->rects_buffer = message_buffer_create((message_buffer_free_func_t) obs_rect_list_t_destroy);
@@ -1571,7 +1571,7 @@ check_gridmap_t *check_gridmap_create_laser(const int constraints, gboolean rend
 
     //ripl_navigator_plan_t_subscribe(self->lcm, "NAVIGATOR_PLAN", on_nav_plan, self);
     //ripl_navigator_status_t_subscribe(self->lcm, "NAVIGATOR_STATUS", on_nav_status, self);
-    ripl_goal_list_t_subscribe(self->lcm, "GOALS", on_goals, self);
+    rrt_goal_list_t_subscribe(self->lcm, "GOALS", on_goals, self);
 
     // Don't account for sim_rects if we are in sensing_only_small mode
     if (self->sensing_only_small == FALSE) {

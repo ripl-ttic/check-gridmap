@@ -11,8 +11,8 @@
 #include <lcmtypes/bot_core_planar_lidar_t.h>
 
 #include <lcmtypes/gridmap_lcmtypes.h>
-#include <lcmtypes/ripl_goal_list_t.h>
-#include <lcmtypes/ripl_map_request_msg_t.h>
+#include <lcmtypes/rrt_goal_list_t.h>
+#include <lcmtypes/maplcm_map_request_msg_t.h>
 #include <lcmtypes/obs_rect_list_t.h>
 #include <lcmtypes/obs_track_list_t.h>
 #include <lcmtypes/ripl_failsafe_t.h>
