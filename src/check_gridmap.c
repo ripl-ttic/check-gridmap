@@ -1457,7 +1457,7 @@ check_gridmap_t *check_gridmap_create_laser(const int constraints, gboolean rend
 
 	if(!bot_param_get_double (self->param, "motion_planner.gridmap.forward_offset", &forward_offset))
 	    self->forward_offset = forward_offset;
-	else
+	else 
 	    self->forward_offset = GRIDMAP_FORWARD_OFFSET;
 
 	if(!bot_param_get_double (self->param, "motion_planner.gridmap.resolution", &resolution))
