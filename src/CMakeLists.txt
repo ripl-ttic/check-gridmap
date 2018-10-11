@@ -30,6 +30,7 @@ set(REQUIRED_LIBS
     carmen-utils
     lcmtypes_ripl-general
     lcmtypes_obstacle-detector
+    lcmtypes_rrtstar
     lcmtypes_map
     gthread-2.0
     glib-2.0
